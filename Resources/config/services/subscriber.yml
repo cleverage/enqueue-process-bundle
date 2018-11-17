@@ -1,0 +1,5 @@
+services:
+    CleverAge\EnqueueProcessBundle\Subscriber\ProcessConsumer:
+        autowire: true
+        tags:
+            - { name: enqueue.client.processor }

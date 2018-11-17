@@ -1,0 +1,35 @@
+{
+    "name": "cleverage/enqueue-process-bundle",
+    "description": "Allow the process bundle to work with Enqueue",
+    "keywords": [
+        "process",
+        "task",
+        "queue",
+        "enqueue",
+        "broker",
+        "thread"
+    ],
+    "homepage": "https://github.com/cleverage/enqueue-process-bundle",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Vincent Chalnot",
+            "email": "vchalnot@clever-age.com",
+            "homepage": "http://chalnot.fr",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "CleverAge\\EnqueueProcessBundle\\": ""
+        }
+    },
+    "require": {
+        "php": ">=7.1",
+        "symfony/symfony": "^3.0|^4.0",
+        "sidus/base-bundle": "1.0.*",
+        "cleverage/process-bundle": "2.0.*",
+        "enqueue/enqueue-bundle": "0.8.*"
+    }
+}
