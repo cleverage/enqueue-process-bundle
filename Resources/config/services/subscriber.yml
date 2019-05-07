@@ -1,5 +1,6 @@
 services:
     CleverAge\EnqueueProcessBundle\Subscriber\ProcessConsumer:
         autowire: true
+        public: true # Required for enqueue
         tags:
             - { name: enqueue.client.processor }

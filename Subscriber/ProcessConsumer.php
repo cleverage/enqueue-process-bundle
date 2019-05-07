@@ -88,6 +88,9 @@ class ProcessConsumer implements PsrProcessor, TopicSubscriberInterface
         try {
             $this->processManager->execute($processCode, $input);
         } catch (\Exception $e) {
+            if (static::$topicsMapping[$topic]['throw_exception'] ?? false) {
+                throw $e;
+            }
             $this->logger->critical(
                 "Process {$processCode} stopped with error: {$e->getMessage()}",
                 [

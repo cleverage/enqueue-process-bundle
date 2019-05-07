@@ -69,6 +69,8 @@ class Configuration implements ConfigurationInterface
      */
     protected function appendTopicsDefinition(NodeBuilder $classDefinition): void
     {
-        $classDefinition->scalarNode('process')->isRequired()->end();
+        $classDefinition
+            ->scalarNode('process')->isRequired()->end()
+            ->booleanNode('throw_exception')->defaultFalse()->end();
     }
 }
