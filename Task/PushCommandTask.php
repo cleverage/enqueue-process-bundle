@@ -69,10 +69,18 @@ class PushCommandTask extends AbstractConfigurableTask implements FlushableTaskI
 
         $options = $this->getOptions($state);
         $results = [];
+        $endTime = ($this->getOption($state, 'timeout') / 1000) + time();
         while (\count($this->replies) >= $options['max_concurrent_replies']) {
+            if (time() > $endTime) {
+                $count = \count($this->replies);
+                throw new \RuntimeException(
+                    "Timeout exceeded for task {$state->getTaskConfiguration()->getCode()}, {$count} remaining messages"
+                );
+            }
             // Wait and fetch more results
-            $results[] = $this->unstackQueue($state)->getBody();
+            $this->unstackQueue($results);
         }
+
         if (0 === \count($results)) {
             $state->setSkipped(true);
         }
@@ -99,32 +107,20 @@ class PushCommandTask extends AbstractConfigurableTask implements FlushableTaskI
     }
 
     /**
-     * @param ProcessState $state
-     *
-     * @return PsrMessage
+     * @param array $results
      */
-    protected function unstackQueue(ProcessState $state): PsrMessage
+    protected function unstackQueue(array &$results = []): void
     {
         if (0 === \count($this->replies)) {
             throw new \UnexpectedValueException('Empty queue');
         }
 
-        $endTime = ($this->getOption($state, 'timeout') / 1000) + time();
-        while (time() <= $endTime) {
-            foreach ($this->replies as $key => $reply) {
-                $response = $reply->receiveNoWait();
-                if ($response instanceof PsrMessage) {
-                    unset($this->replies[$key]);
-
-                    return $response;
-                }
+        foreach ($this->replies as $key => $reply) {
+            $response = $reply->receiveNoWait();
+            if ($response instanceof PsrMessage) {
+                unset($this->replies[$key]);
+                $results[] = $response->getBody();
             }
-            sleep(1);
         }
-
-        $count = \count($this->replies);
-        throw new \RuntimeException(
-            "Timeout exceeded for task {$state->getTaskConfiguration()->getCode()}, {$count} remaining messages"
-        );
     }
 }
