@@ -10,7 +10,9 @@
 
 namespace CleverAge\EnqueueProcessBundle\DependencyInjection;
 
-use CleverAge\EnqueueProcessBundle\Subscriber\ProcessConsumer;
+use CleverAge\EnqueueProcessBundle\Subscriber\ProcessCommandConsumer;
+use CleverAge\EnqueueProcessBundle\Subscriber\ProcessTopicConsumer;
+use Enqueue\Client\Config;
 use Sidus\BaseBundle\DependencyInjection\SidusBaseExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -27,15 +29,39 @@ class CleverAgeEnqueueProcessExtension extends SidusBaseExtension
      *
      * @throws \Exception
      */
-    public function load(array $configs, ContainerBuilder $container)
+    public function load(array $configs, ContainerBuilder $container): void
     {
         parent::load($configs, $container);
 
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
 
-        $processDefinition = $container->getDefinition(ProcessConsumer::class);
-        $processDefinition->addMethodCall('setTopicsMapping', [$config['topics']]);
-        ProcessConsumer::setTopicsMapping($config['topics']);
+        $processTopicConsumerDefinition = $container->getDefinition(ProcessTopicConsumer::class);
+        $processTopicConsumerDefinition->addMethodCall('setTopicConfigurations', [$config['topics']]);
+        foreach ($config['topics'] as $topicName => $topicConfig) {
+            $processTopicConsumerDefinition->addTag(
+                'enqueue.client.processor',
+                [
+                    'topicName' => $topicName,
+                    'queueName' => $topicConfig['queueName'],
+                    'queueNameHardcoded' => $topicConfig['queueNameHardcoded'],
+                ]
+            );
+        }
+
+        $processCommandConsumerDefinition = $container->getDefinition(ProcessCommandConsumer::class);
+        $processCommandConsumerDefinition->addMethodCall('setCommandConfigurations', [$config['commands']]);
+        foreach ($config['commands'] as $commandName => $commandConfig) {
+            $processCommandConsumerDefinition->addTag(
+                'enqueue.client.processor',
+                [
+                    'topicName' => Config::COMMAND_TOPIC,
+                    'queueName' => $commandConfig['queueName'],
+                    'queueNameHardcoded' => $commandConfig['queueNameHardcoded'],
+                    'processorName' => $commandName,
+                    'exclusive' => $commandConfig['exclusive'],
+                ]
+            );
+        }
     }
 }

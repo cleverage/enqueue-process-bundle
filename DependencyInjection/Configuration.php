@@ -44,16 +44,26 @@ class Configuration implements ConfigurationInterface
         $treeBuilder = new TreeBuilder();
         $rootNode = $treeBuilder->root($this->root);
 
-        $classDefinition = $rootNode
+        $topicDefinition = $rootNode
             ->children()
                 ->arrayNode('topics')
                     ->defaultValue([])
                     ->prototype('array')
                         ->children();
 
-        $this->appendTopicsDefinition($classDefinition);
+        $this->appendTopicDefinition($topicDefinition);
 
-        $classDefinition->end()
+        $commandDefinition = $topicDefinition->end()
+                    ->end()
+                ->end()
+                ->arrayNode('commands')
+                    ->defaultValue([])
+                    ->prototype('array')
+                        ->children();
+
+        $this->appendCommandDefinition($commandDefinition);
+
+        $commandDefinition->end()
                     ->end()
                 ->end()
             ->end();
@@ -67,10 +77,28 @@ class Configuration implements ConfigurationInterface
      * @throws \InvalidArgumentException
      * @throws \RuntimeException
      */
-    protected function appendTopicsDefinition(NodeBuilder $classDefinition): void
+    protected function appendTopicDefinition(NodeBuilder $classDefinition): void
     {
         $classDefinition
             ->scalarNode('process')->isRequired()->end()
+            ->scalarNode('queueName')->defaultNull()->end()
+            ->scalarNode('queueNameHardcoded')->defaultFalse()->end()
             ->booleanNode('throw_exception')->defaultFalse()->end();
+    }
+
+    /**
+     * @param NodeBuilder $classDefinition
+     *
+     * @throws \InvalidArgumentException
+     * @throws \RuntimeException
+     */
+    protected function appendCommandDefinition(NodeBuilder $classDefinition): void
+    {
+        $classDefinition
+            ->scalarNode('process')->isRequired()->end()
+            ->scalarNode('queueName')->defaultNull()->end()
+            ->scalarNode('queueNameHardcoded')->defaultFalse()->end()
+            ->scalarNode('exclusive')->defaultFalse()->end()
+            ->booleanNode('throw_exception')->defaultTrue()->end();
     }
 }

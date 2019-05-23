@@ -14,66 +14,49 @@ use CleverAge\ProcessBundle\Manager\ProcessManager;
 use Interop\Queue\PsrMessage;
 use Interop\Queue\PsrContext;
 use Interop\Queue\PsrProcessor;
-use Enqueue\Client\TopicSubscriberInterface;
 use Psr\Log\LoggerInterface;
 
 /**
  * Read events from the queue and dispatch them to processes
  */
-class ProcessConsumer implements PsrProcessor, TopicSubscriberInterface
+class ProcessTopicConsumer implements PsrProcessor
 {
-    /** @var array */
-    protected static $topicsMapping;
-
     /** @var ProcessManager */
     protected $processManager;
 
     /** @var LoggerInterface */
     protected $logger;
 
+    /** @var array */
+    protected $topicConfigurations;
+
     /**
      * @param ProcessManager  $processManager
      * @param LoggerInterface $logger
      */
-    public function __construct(ProcessManager $processManager, LoggerInterface $logger)
-    {
+    public function __construct(
+        ProcessManager $processManager,
+        LoggerInterface $logger
+    ) {
         $this->processManager = $processManager;
         $this->logger = $logger;
     }
 
     /**
-     * @param array $topicsMapping
+     * @param array $topicConfigurations
      */
-    public static function setTopicsMapping(array $topicsMapping): void
+    public function setTopicConfigurations(array $topicConfigurations): void
     {
-        static::$topicsMapping = $topicsMapping;
+        $this->topicConfigurations = $topicConfigurations;
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public static function getSubscribedTopics()
-    {
-        return array_keys(static::$topicsMapping);
-    }
-
-    /**
-     * The method has to return either self::ACK, self::REJECT, self::REQUEUE string.
-     *
-     * The method also can return an object.
-     * It must implement __toString method and the method must return one of the constants from above.
-     *
-     * @param PsrMessage $message
-     * @param PsrContext $context
-     *
-     * @throws \Exception
-     *
-     * @return string|object with __toString method implemented
+     * {@inheritDoc}
      */
     public function process(PsrMessage $message, PsrContext $context)
     {
         $topic = $message->getProperty('enqueue.topic_name');
-        $processCode = static::$topicsMapping[$topic]['process'];
+        $processCode = $this->topicConfigurations[$topic]['process'];
         $input = json_decode($message->getBody(), true);
         if (null === $input) {
             $input = $message->getBody();
@@ -88,7 +71,7 @@ class ProcessConsumer implements PsrProcessor, TopicSubscriberInterface
         try {
             $this->processManager->execute($processCode, $input);
         } catch (\Exception $e) {
-            if (static::$topicsMapping[$topic]['throw_exception'] ?? false) {
+            if ($this->topicConfigurations[$topic]['throw_exception'] ?? false) {
                 throw $e;
             }
             $this->logger->critical(

@@ -4,6 +4,14 @@ CleverAge/ProcessEnqueueBundle Documentation
 This bundle allows you to connect tasks from the process bundle to some consumers that launch processes.
 This allows to multi-thread/parallelize processes.
 
+## Important notice
+
+Use events to notify consumers that something has happened and use commands when you want to wait for the result of an
+action.
+
+You need to statically map topics and commands to consumers in this bundle configuration else it will simply not work
+without any notice.
+
 ## Quick example
 
 ````yaml
