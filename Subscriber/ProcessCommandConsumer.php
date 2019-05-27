@@ -10,38 +10,17 @@
 
 namespace CleverAge\EnqueueProcessBundle\Subscriber;
 
-use CleverAge\ProcessBundle\Manager\ProcessManager;
 use Enqueue\Consumption\Result;
 use Interop\Queue\PsrMessage;
 use Interop\Queue\PsrContext;
-use Interop\Queue\PsrProcessor;
-use Psr\Log\LoggerInterface;
 
 /**
  * Read command input from the queue and dispatch them to a single process
  */
-class ProcessCommandConsumer implements PsrProcessor
+class ProcessCommandConsumer extends AbstractProcessConsumer
 {
-    /** @var ProcessManager */
-    protected $processManager;
-
-    /** @var LoggerInterface */
-    protected $logger;
-
     /** @var array */
     protected $commandConfigurations;
-
-    /**
-     * @param ProcessManager  $processManager
-     * @param LoggerInterface $logger
-     */
-    public function __construct(
-        ProcessManager $processManager,
-        LoggerInterface $logger
-    ) {
-        $this->processManager = $processManager;
-        $this->logger = $logger;
-    }
 
     /**
      * @param array $commandConfigurations
@@ -52,50 +31,21 @@ class ProcessCommandConsumer implements PsrProcessor
     }
 
     /**
-     * The method has to return either self::ACK, self::REJECT, self::REQUEUE string.
-     *
-     * The method also can return an object.
-     * It must implement __toString method and the method must return one of the constants from above.
-     *
      * @param PsrMessage $message
-     * @param PsrContext $context
+     * @param string     $option
      *
-     * @throws \Exception
-     *
-     * @return string|object with __toString method implemented
+     * @return mixed
      */
-    public function process(PsrMessage $message, PsrContext $context)
+    protected function getConfigOption(PsrMessage $message, string $option)
     {
-        $command = $message->getProperty('enqueue.command_name');
-        $processCode = $this->commandConfigurations[$command]['process'];
-        $input = json_decode($message->getBody(), true);
-        if (null === $input) {
-            $input = $message->getBody();
-        }
+        return $this->commandConfigurations[$message->getProperty('enqueue.command_name')][$option];
+    }
 
-        $this->logger->info(
-            "Launching process {$processCode}",
-            [
-                'input' => $message->getBody(),
-            ]
-        );
-        try {
-            $output = $this->processManager->execute($processCode, $input);
-        } catch (\Exception $e) {
-            if ($this->commandConfiguration['throw_exception'] ?? false) {
-                throw $e;
-            }
-            $this->logger->critical(
-                "Process {$processCode} stopped with error: {$e->getMessage()}",
-                [
-                    'input' => $message->getBody(),
-                    'exception' => $e,
-                ]
-            );
-
-            return self::REJECT;
-        }
-
+    /**
+     * {@inheritDoc}
+     */
+    protected function handleOutput(PsrMessage $message, PsrContext $context, $output)
+    {
         return Result::reply($context->createMessage($output));
     }
 }

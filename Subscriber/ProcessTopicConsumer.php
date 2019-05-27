@@ -10,37 +10,16 @@
 
 namespace CleverAge\EnqueueProcessBundle\Subscriber;
 
-use CleverAge\ProcessBundle\Manager\ProcessManager;
 use Interop\Queue\PsrMessage;
 use Interop\Queue\PsrContext;
-use Interop\Queue\PsrProcessor;
-use Psr\Log\LoggerInterface;
 
 /**
  * Read events from the queue and dispatch them to processes
  */
-class ProcessTopicConsumer implements PsrProcessor
+class ProcessTopicConsumer extends AbstractProcessConsumer
 {
-    /** @var ProcessManager */
-    protected $processManager;
-
-    /** @var LoggerInterface */
-    protected $logger;
-
     /** @var array */
     protected $topicConfigurations;
-
-    /**
-     * @param ProcessManager  $processManager
-     * @param LoggerInterface $logger
-     */
-    public function __construct(
-        ProcessManager $processManager,
-        LoggerInterface $logger
-    ) {
-        $this->processManager = $processManager;
-        $this->logger = $logger;
-    }
 
     /**
      * @param array $topicConfigurations
@@ -51,40 +30,21 @@ class ProcessTopicConsumer implements PsrProcessor
     }
 
     /**
+     * @param PsrMessage $message
+     * @param string     $option
+     *
+     * @return mixed
+     */
+    protected function getConfigOption(PsrMessage $message, string $option)
+    {
+        return $this->topicConfigurations[$message->getProperty('enqueue.command_name')][$option];
+    }
+
+    /**
      * {@inheritDoc}
      */
-    public function process(PsrMessage $message, PsrContext $context)
+    protected function handleOutput(PsrMessage $message, PsrContext $context, $output): string
     {
-        $topic = $message->getProperty('enqueue.topic_name');
-        $processCode = $this->topicConfigurations[$topic]['process'];
-        $input = json_decode($message->getBody(), true);
-        if (null === $input) {
-            $input = $message->getBody();
-        }
-
-        $this->logger->info(
-            "Launching process {$processCode}",
-            [
-                'input' => $message->getBody(),
-            ]
-        );
-        try {
-            $this->processManager->execute($processCode, $input);
-        } catch (\Exception $e) {
-            if ($this->topicConfigurations[$topic]['throw_exception'] ?? false) {
-                throw $e;
-            }
-            $this->logger->critical(
-                "Process {$processCode} stopped with error: {$e->getMessage()}",
-                [
-                    'input' => $message->getBody(),
-                    'exception' => $e,
-                ]
-            );
-
-            return self::REJECT;
-        }
-
         return self::ACK;
     }
 }

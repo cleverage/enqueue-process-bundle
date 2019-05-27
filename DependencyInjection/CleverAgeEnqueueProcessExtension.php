@@ -43,8 +43,8 @@ class CleverAgeEnqueueProcessExtension extends SidusBaseExtension
                 'enqueue.client.processor',
                 [
                     'topicName' => $topicName,
-                    'queueName' => $topicConfig['queueName'],
-                    'queueNameHardcoded' => $topicConfig['queueNameHardcoded'],
+                    'queueName' => $topicConfig['queue_name'],
+                    'queueNameHardcoded' => $topicConfig['queue_name_hardcoded'],
                 ]
             );
         }
@@ -56,8 +56,8 @@ class CleverAgeEnqueueProcessExtension extends SidusBaseExtension
                 'enqueue.client.processor',
                 [
                     'topicName' => Config::COMMAND_TOPIC,
-                    'queueName' => $commandConfig['queueName'],
-                    'queueNameHardcoded' => $commandConfig['queueNameHardcoded'],
+                    'queueName' => $commandConfig['queue_name'],
+                    'queueNameHardcoded' => $commandConfig['queue_name_hardcoded'],
                     'processorName' => $commandName,
                     'exclusive' => $commandConfig['exclusive'],
                 ]

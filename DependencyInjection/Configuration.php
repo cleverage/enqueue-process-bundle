@@ -81,9 +81,13 @@ class Configuration implements ConfigurationInterface
     {
         $classDefinition
             ->scalarNode('process')->isRequired()->end()
-            ->scalarNode('queueName')->defaultNull()->end()
-            ->scalarNode('queueNameHardcoded')->defaultFalse()->end()
-            ->booleanNode('throw_exception')->defaultFalse()->end();
+            ->scalarNode('queue_name')->defaultNull()->end()
+            ->scalarNode('queue_name_hardcoded')->defaultFalse()->end()
+            ->booleanNode('throw_exception')->defaultFalse()->end()
+            ->scalarNode('error_strategy')
+                ->defaultValue('reject')
+                ->validate()->ifNotInArray(['ack', 'reject', 'requeue'])->thenInvalid('Invalid error_strategy')->end()
+            ->end();
     }
 
     /**
@@ -96,9 +100,13 @@ class Configuration implements ConfigurationInterface
     {
         $classDefinition
             ->scalarNode('process')->isRequired()->end()
-            ->scalarNode('queueName')->defaultNull()->end()
-            ->scalarNode('queueNameHardcoded')->defaultFalse()->end()
+            ->scalarNode('queue_name')->defaultNull()->end()
+            ->scalarNode('queue_name_hardcoded')->defaultFalse()->end()
             ->scalarNode('exclusive')->defaultFalse()->end()
-            ->booleanNode('throw_exception')->defaultTrue()->end();
+            ->booleanNode('throw_exception')->defaultTrue()->end()
+            ->scalarNode('error_strategy')
+                ->defaultValue('reject')
+                ->validate()->ifNotInArray(['ack', 'reject', 'requeue'])->thenInvalid('Invalid error_strategy')->end()
+            ->end();
     }
 }
