@@ -37,7 +37,7 @@ class ProcessTopicConsumer extends AbstractProcessConsumer
      */
     protected function getConfigOption(PsrMessage $message, string $option)
     {
-        return $this->topicConfigurations[$message->getProperty('enqueue.command_name')][$option];
+        return $this->topicConfigurations[$message->getProperty('enqueue.topic_name')][$option];
     }
 
     /**
