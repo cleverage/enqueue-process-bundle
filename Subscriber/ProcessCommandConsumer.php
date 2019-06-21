@@ -44,7 +44,7 @@ class ProcessCommandConsumer extends AbstractProcessConsumer
     /**
      * {@inheritDoc}
      */
-    protected function handleOutput(PsrMessage $message, PsrContext $context, $output)
+    protected function handleOutput(PsrMessage $message, PsrContext $context, $output): string
     {
         return Result::reply($context->createMessage($output));
     }

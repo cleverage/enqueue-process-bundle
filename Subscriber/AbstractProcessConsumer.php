@@ -63,7 +63,7 @@ abstract class AbstractProcessConsumer implements PsrProcessor
                 ]
             );
 
-            $errorStrategy = $this->getConfigOption($message, 'error_stratery');
+            $errorStrategy = $this->getConfigOption($message, 'error_strategy');
             if ('reject' === $errorStrategy) {
                 return self::REJECT;
             }
