@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /*
  * This file is part of the CleverAge/EnqueueProcessBundle package.
  *
@@ -44,7 +44,7 @@ class ProcessCommandConsumer extends AbstractProcessConsumer
     /**
      * {@inheritDoc}
      */
-    protected function handleOutput(PsrMessage $message, PsrContext $context, $output): string
+    protected function handleOutput(PsrMessage $message, PsrContext $context, $output): Result
     {
         return Result::reply($context->createMessage($output));
     }
