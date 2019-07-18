@@ -46,9 +46,9 @@ abstract class AbstractProcessConsumer implements PsrProcessor
     public function process(PsrMessage $message, PsrContext $context)
     {
         $processCode = $this->getConfigOption($message, 'process');
-        $input = json_decode($message->getBody(), true);
-        if (null === $input) {
-            $input = $message->getBody();
+        $input = $message->getBody();
+        if ($this->getConfigOption($message, 'json_decode')) {
+            $input = json_decode($message->getBody(), true);
         }
 
         $this->logger->info(
