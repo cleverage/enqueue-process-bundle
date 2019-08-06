@@ -2,7 +2,7 @@
 /*
  * This file is part of the CleverAge/EnqueueProcessBundle package.
  *
- * Copyright (c) 2015-2018 Clever-Age
+ * Copyright (c) 2015-2019 Clever-Age
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -79,33 +79,31 @@ class Configuration implements ConfigurationInterface
      */
     protected function appendTopicDefinition(NodeBuilder $classDefinition): void
     {
-        $classDefinition
-            ->scalarNode('process')->isRequired()->end()
-            ->scalarNode('queue_name')->defaultNull()->end()
-            ->scalarNode('queue_name_hardcoded')->defaultFalse()->end()
-            ->booleanNode('throw_exception')->defaultFalse()->end()
-            ->booleanNode('json_decode')->defaultFalse()->end()
-            ->scalarNode('error_strategy')
-                ->defaultValue('reject')
-                ->validate()->ifNotInArray(['ack', 'reject', 'requeue'])->thenInvalid('Invalid error_strategy')->end()
-            ->end();
+        $this->appendCommonDefinition($classDefinition);
     }
 
     /**
      * @param NodeBuilder $classDefinition
-     *
-     * @throws \InvalidArgumentException
-     * @throws \RuntimeException
      */
     protected function appendCommandDefinition(NodeBuilder $classDefinition): void
+    {
+        $this->appendCommonDefinition($classDefinition);
+        $classDefinition
+            ->scalarNode('exclusive')->defaultFalse()->end();
+    }
+
+    /**
+     * @param NodeBuilder $classDefinition
+     */
+    protected function appendCommonDefinition(NodeBuilder $classDefinition): void
     {
         $classDefinition
             ->scalarNode('process')->isRequired()->end()
             ->scalarNode('queue_name')->defaultNull()->end()
             ->scalarNode('queue_name_hardcoded')->defaultFalse()->end()
-            ->scalarNode('exclusive')->defaultFalse()->end()
-            ->booleanNode('throw_exception')->defaultTrue()->end()
             ->booleanNode('json_decode')->defaultFalse()->end()
+            ->integerNode('max_requeue')->defaultNull()->end()
+            ->booleanNode('throw_exception')->defaultTrue()->end()
             ->scalarNode('error_strategy')
                 ->defaultValue('reject')
                 ->validate()->ifNotInArray(['ack', 'reject', 'requeue'])->thenInvalid('Invalid error_strategy')->end()
