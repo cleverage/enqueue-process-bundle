@@ -107,10 +107,8 @@ abstract class AbstractProcessConsumer implements PsrProcessor
                     ]
                 );
             }
-        }
-
-        if ($this->getConfigOption($message, 'throw_exception')) {
-            throw $e;
+        } elseif ($this->getConfigOption($message, 'throw_exception')) {
+            throw $e; // Throwing exception is not compatible with max count requeuing messages
         }
 
         $errorStrategy = $this->getConfigOption($message, 'error_strategy');
