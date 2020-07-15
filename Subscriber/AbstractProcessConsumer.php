@@ -24,6 +24,13 @@ use function get_class;
  */
 abstract class AbstractProcessConsumer implements PsrProcessor
 {
+    /** @var array */
+    protected const ERROR_STRATEGY_MAPPING = [
+        'reject' => self::REJECT,
+        'requeue' => self::REQUEUE,
+        'ack' => self::ACK,
+    ];
+
     /** @var ProcessManager */
     protected $processManager;
 
@@ -112,14 +119,8 @@ abstract class AbstractProcessConsumer implements PsrProcessor
         }
 
         $errorStrategy = $this->getConfigOption($message, 'error_strategy');
-        if ('reject' === $errorStrategy) {
-            return self::REJECT;
-        }
-        if ('requeue' === $errorStrategy) {
-            return self::REQUEUE;
-        }
-        if ('ack' === $errorStrategy) {
-            return self::ACK;
+        if (array_key_exists($errorStrategy, self::ERROR_STRATEGY_MAPPING)) {
+            return self::ERROR_STRATEGY_MAPPING[$errorStrategy];
         }
 
         throw new \UnexpectedValueException("Unexpected error strategy {$errorStrategy}", 0, $e);
