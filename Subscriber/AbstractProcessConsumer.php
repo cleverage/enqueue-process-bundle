@@ -106,14 +106,16 @@ abstract class AbstractProcessConsumer implements PsrProcessor
 
                     return self::REQUEUE;
                 }
-            } else {
-                $this->logger->critical(
-                    'Message is not an AmqpMessage so max_requeue option is not supported',
-                    [
-                        'message_class' => get_class($message),
-                    ]
-                );
+
+                return self::REJECT;
             }
+
+            $this->logger->critical(
+                'Message is not an AmqpMessage so max_requeue option is not supported',
+                [
+                    'message_class' => get_class($message),
+                ]
+            );
         } elseif ($this->getConfigOption($message, 'throw_exception')) {
             throw $e; // Throwing exception is not compatible with max count requeuing messages
         }
