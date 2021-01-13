@@ -67,7 +67,7 @@ abstract class AbstractProcessConsumer implements PsrProcessor
             ]
         );
         try {
-            $output = $this->processManager->execute($processCode, $input);
+            $output = $this->processManager->execute($processCode, $input, $message->getProperty('context', []));
         } catch (\Exception $e) {
             return $this->handleException($message, $processCode, $e);
         }

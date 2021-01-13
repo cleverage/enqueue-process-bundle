@@ -12,6 +12,7 @@ namespace CleverAge\EnqueueProcessBundle\Task;
 
 use CleverAge\ProcessBundle\Model\AbstractConfigurableTask;
 use CleverAge\ProcessBundle\Model\ProcessState;
+use Enqueue\Client\Message;
 use Enqueue\Client\ProducerInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -36,7 +37,15 @@ class PushEventTask extends AbstractConfigurableTask
      */
     public function execute(ProcessState $state)
     {
-        $this->producer->sendEvent($this->getOption($state, 'topic'), $state->getInput());
+        $options = $this->getOptions($state);
+        $properties = [];
+        if ($options['inherit_context']) {
+            $properties['context'] = $state->getContext();
+        } else {
+            $properties['context'] = $options['context'];
+        }
+        $message = new Message($state->getInput(), $properties);
+        $this->producer->sendEvent($options['topic'], $message);
     }
 
     /**
@@ -49,5 +58,11 @@ class PushEventTask extends AbstractConfigurableTask
                 'topic',
             ]
         );
+        $resolver->setDefaults(
+            [
+                'context' => [],
+            ]
+        );
+        $resolver->setAllowedTypes('context', ['null', 'array']);
     }
 }

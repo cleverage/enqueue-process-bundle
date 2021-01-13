@@ -13,6 +13,7 @@ namespace CleverAge\EnqueueProcessBundle\Task;
 use CleverAge\ProcessBundle\Model\AbstractConfigurableTask;
 use CleverAge\ProcessBundle\Model\FlushableTaskInterface;
 use CleverAge\ProcessBundle\Model\ProcessState;
+use Enqueue\Client\Message;
 use Enqueue\Client\ProducerInterface;
 use Enqueue\Rpc\Promise;
 use Interop\Queue\PsrMessage;
@@ -47,7 +48,9 @@ class PushCommandTask extends AbstractConfigurableTask implements FlushableTaskI
         $results = [];
         foreach ($this->replies as $key => $reply) {
             $response = $reply->receive($this->getOption($state, 'timeout'));
-            $results[] = $response->getBody();
+            if ($response) {
+                $results[] = $response->getBody();
+            }
         }
         $this->replies = [];
         if (0 === \count($results)) {
@@ -61,15 +64,22 @@ class PushCommandTask extends AbstractConfigurableTask implements FlushableTaskI
      */
     public function execute(ProcessState $state): void
     {
-        $reply = $this->producer->sendCommand($this->getOption($state, 'command'), $state->getInput(), true);
+        $options = $this->getOptions($state);
+        $properties = [];
+        if ($options['inherit_context']) {
+            $properties['context'] = $state->getContext();
+        } else {
+            $properties['context'] = $options['context'];
+        }
+        $message = new Message($state->getInput(), $properties);
+        $reply = $this->producer->sendCommand($options['command'], $message, true);
         if (!$reply instanceof Promise) {
             throw new \UnexpectedValueException('No promise found for command');
         }
         $this->replies[] = $reply;
 
-        $options = $this->getOptions($state);
         $results = [];
-        $endTime = ($this->getOption($state, 'timeout') / 1000) + time();
+        $endTime = ($options['timeout'] / 1000) + time();
         while (\count($this->replies) >= $options['max_concurrent_replies']) {
             if (time() > $endTime) {
                 $count = \count($this->replies);
@@ -101,9 +111,13 @@ class PushCommandTask extends AbstractConfigurableTask implements FlushableTaskI
             [
                 'max_concurrent_replies' => 1,
                 'timeout' => 60000,
+                'inherit_context' => true,
+                'context' => [],
             ]
         );
         $resolver->setAllowedTypes('max_concurrent_replies', ['int']);
+        $resolver->setAllowedTypes('inherit_context', ['bool']);
+        $resolver->setAllowedTypes('context', ['null', 'array']);
     }
 
     /**
