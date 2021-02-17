@@ -60,9 +60,11 @@ class PushEventTask extends AbstractConfigurableTask
         );
         $resolver->setDefaults(
             [
+                'inherit_context' => true,
                 'context' => [],
             ]
         );
+        $resolver->setAllowedTypes('inherit_context', ['bool']);
         $resolver->setAllowedTypes('context', ['null', 'array']);
     }
 }
